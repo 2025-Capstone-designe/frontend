@@ -7,6 +7,7 @@ export default function App() {
 
   const [trackingData, setTrackingData] = useState({
     totalMovement: "로딩 중...",
+    recentMovements: [],
     eatingDuration: "정보 없음",
     drinkingDuration: "정보 없음",
   });
@@ -17,8 +18,8 @@ export default function App() {
     standardDrinkingTime: "4분", // 기준 물 마시는 시간 (하드코딩)
   });
 
-  const [showRecommendation, setShowRecommendation] = useState(false);
-  const [movementPath, setMovementPath] = useState([]);
+  const [showTracking, setShowTracking] = useState(false); // 캠 클릭 시 이동 경로 표시 여부
+  const [showRecommendation, setShowRecommendation] = useState(false); // 상세 정보 표시 여부
   const canvasRef = useRef(null);
 
   // 📌 백엔드에서 이동 데이터 가져오기
@@ -30,6 +31,7 @@ export default function App() {
 
         setTrackingData({
           totalMovement: `${dailyMovementRes.data.total_movement}m`,
+          recentMovements: recentMovementsRes.data.recent_movements || [],
           eatingDuration: recentMovementsRes.data.eating_duration
             ? `${recentMovementsRes.data.eating_duration}분`
             : "정보 없음",
@@ -41,6 +43,7 @@ export default function App() {
         console.error("🚨 데이터 가져오기 실패:", error);
         setTrackingData({
           totalMovement: "데이터 로드 실패",
+          recentMovements: [],
           eatingDuration: "정보 없음",
           drinkingDuration: "정보 없음",
         });
@@ -50,33 +53,30 @@ export default function App() {
     fetchTrackingData();
   }, []);
 
-  // 📌 CAM 클릭 시 이동 경로 저장
-  const handleCamClick = (event) => {
-    const rect = event.target.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+  // 📌 캠 클릭 시 이동 경로 토글
+  const handleCamClick = () => {
+    setShowTracking((prev) => !prev);
 
-    setMovementPath((prev) => [...prev, { x, y }]);
-
-    // 캔버스에 이동 경로 그리기
-    drawMovementPath([...movementPath, { x, y }]);
+    if (!showTracking) {
+      drawMovementPath(trackingData.recentMovements);
+    } else {
+      clearCanvas();
+    }
   };
 
-  // 📌 이동 경로 그리기
+  // 📌 이동 경로 그리기 (백엔드에서 가져온 데이터 사용)
   const drawMovementPath = (points) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || points.length < 2) return;
 
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (points.length < 2) return;
-
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+    ctx.moveTo(points[0].x * 4, points[0].y * 4); // 좌표값을 캠 크기에 맞게 스케일 조정
 
     for (let i = 1; i < points.length; i++) {
-      ctx.lineTo(points[i].x, points[i].y);
+      ctx.lineTo(points[i].x * 4, points[i].y * 4);
     }
 
     ctx.strokeStyle = "red";
@@ -84,16 +84,22 @@ export default function App() {
     ctx.stroke();
   };
 
+  // 📌 캔버스 초기화
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
   return (
     <div style={{ display: "flex", padding: "20px", border: "2px solid black" }}>
       {/* 📌 웹캠 및 이동 패턴 표시 */}
-      <div style={{ position: "relative", width: "400px", height: "300px", border: "2px solid black" }}>
-        <Webcam
-          width="400px"
-          height="300px"
-          screenshotFormat="image/jpeg"
-          onClick={handleCamClick}
-        />
+      <div
+        style={{ position: "relative", width: "400px", height: "300px", border: "2px solid black" }}
+        onClick={handleCamClick} // 클릭하면 이동 경로 표시 또는 제거
+      >
+        <Webcam width="400px" height="300px" screenshotFormat="image/jpeg" />
         <canvas
           ref={canvasRef}
           width="400px"
@@ -114,14 +120,14 @@ export default function App() {
         <p>🕒 기준 물 마시는 시간: {standardData.standardDrinkingTime}</p>
 
         <p>
-          📢 추천 정보: <button onClick={() => setShowRecommendation(true)}>보기</button>
+          📢 추천 정보: <button onClick={() => setShowRecommendation((prev) => !prev)}>보기</button>
         </p>
 
-        {/* 📌 추천 정보 표시 */}
+        {/* 📌 추천 정보 표시 (클릭 시 토글) */}
         {showRecommendation && (
           <div style={{ border: "1px solid black", padding: "10px", marginTop: "10px", backgroundColor: "#f9f9f9" }}>
             <strong>⚠️ 오늘 활동 분석</strong>
-            <p>운동량이 부족하거나 과도할 수 있습니다. 햄스터의 건강상태를 확인해주세요.</p>
+            <p>운동량이 부족하거나 과도할 수 있습니다. 추가적인 운동 또는 휴식을 고려하세요.</p>
           </div>
         )}
       </div>
