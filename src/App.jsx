@@ -58,7 +58,7 @@ export default function App() {
       }
     };
 
-    fetchData();
+    // fetchData();
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -83,13 +83,13 @@ useEffect(() => {
 
       // 반투명 원
       ctx.beginPath();
-      ctx.arc(parseFloat(point.x), parseFloat(point.y), radius, 0, 2 * Math.PI);
+      ctx.arc(parseFloat(point.x), 480-parseFloat(point.y), radius, 0, 2 * Math.PI);
       ctx.fillStyle = color;
       ctx.fill();
 
       // 중심 빨간 점
       ctx.beginPath();
-      ctx.arc(parseFloat(point.x), parseFloat(point.y), 2, 0, 2 * Math.PI);
+      ctx.arc(parseFloat(point.x), 480-parseFloat(point.y), 2, 0, 2 * Math.PI);
       ctx.fillStyle = "#ff4500";
       ctx.fill();
     });
