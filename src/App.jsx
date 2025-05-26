@@ -16,7 +16,7 @@ export default function App() {
   const canvasRef = useRef(null);
 
   const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
-  const streamURL = "http://192.168.0.86:5005/video_feed";
+  const streamURL = "https://192.168.0.86:5005/video_feed";
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ''));
@@ -76,7 +76,7 @@ useEffect(() => {
       const ratio = index / (N - 1); // 오래된 순서 기준
 
       const radius = 20 + 40 * ratio;           // 작게 → 크게
-      const opacity = 1.0 - 0.5 * ratio;         // 50% → 100%
+      const opacity = 1.0 - 0.5 * ratio;         // 100% → 50%
       const r = Math.round(255 * (1 - ratio));   // 빨강 → 0
       const g = Math.round(255 * ratio);         // 0 → 초록
       const color = `rgba(${r}, ${g}, 0, ${opacity})`;
