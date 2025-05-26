@@ -58,8 +58,8 @@ export default function App() {
       }
     };
 
-    // fetchData();
-    const interval = setInterval(fetchData, 10000);
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -75,6 +75,7 @@ useEffect(() => {
     recentMovements.forEach((point, index) => {
       const ratio = index / (N - 1); // 오래된 순서 기준
 
+      const maxY = 480                          // 카메라: 640*480
       const radius = 20 + 40 * ratio;           // 작게 → 크게
       const opacity = 1.0 - 0.5 * ratio;         // 100% → 50%
       const r = Math.round(255 * (1 - ratio));   // 빨강 → 0
@@ -83,13 +84,13 @@ useEffect(() => {
 
       // 반투명 원
       ctx.beginPath();
-      ctx.arc(parseFloat(point.x), 480-parseFloat(point.y), radius, 0, 2 * Math.PI);
+      ctx.arc(parseFloat(point.x), maxY-parseFloat(point.y), radius, 0, 2 * Math.PI);
       ctx.fillStyle = color;
       ctx.fill();
 
       // 중심 빨간 점
       ctx.beginPath();
-      ctx.arc(parseFloat(point.x), 480-parseFloat(point.y), 2, 0, 2 * Math.PI);
+      ctx.arc(parseFloat(point.x), maxY-parseFloat(point.y), 2, 0, 2 * Math.PI);
       ctx.fillStyle = "#ff4500";
       ctx.fill();
     });
