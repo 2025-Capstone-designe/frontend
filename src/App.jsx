@@ -71,29 +71,34 @@ useEffect(() => {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const N = recentMovements.length;
-    recentMovements.forEach((point, index) => {
-      const ratio = index / (N - 1); // 오래된 순서 기준
+    const N = recentMovements.length;   // 10
+    recentMovements.slice().reverse().forEach((point, reverseIndex) => {  // reverse를 통해 reverseIndex=0이 가장 최신
+      const index = N - 1 - reverseIndex; // index=0이 가장 오래된 데이터
+      const ratio = index / (N - 1);
 
-      const maxY = 480                          // 카메라: 640*480
-      const radius = 20 + 40 * ratio;           // 작게 → 크게
-      const opacity = 1.0 - 0.5 * ratio;         // 100% → 50%
-      const r = Math.round(255 * (1 - ratio));   // 빨강 → 0
-      const g = Math.round(255 * ratio);         // 0 → 초록
+      const maxY = 480;                             // 카메라: 640*480
+      const radius = 20 + 40 * ratio;               // 작게 → 크게
+      const opacity = 1.0 - 0.5 * ratio;            // 투명도 100% → 50%
+      const r = Math.round(255 * (1 - ratio));      // 빨강 → 0
+      const g = Math.round(255 * ratio);            // 0 → 초록
       const color = `rgba(${r}, ${g}, 0, ${opacity})`;
 
+      const x = parseFloat(point.x);
+      const y = maxY - parseFloat(point.y);
+      
       // 반투명 원
       ctx.beginPath();
-      ctx.arc(parseFloat(point.x), maxY-parseFloat(point.y), radius, 0, 2 * Math.PI);
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
       ctx.fillStyle = color;
       ctx.fill();
 
       // 중심 빨간 점
       ctx.beginPath();
-      ctx.arc(parseFloat(point.x), maxY-parseFloat(point.y), 2, 0, 2 * Math.PI);
+      ctx.arc(x, y, 2, 0, 2 * Math.PI);
       ctx.fillStyle = "#ff4500";
       ctx.fill();
     });
+
   };
 
   drawFixedRatioCircles();
