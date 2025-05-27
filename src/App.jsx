@@ -72,11 +72,9 @@ useEffect(() => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const N = recentMovements.length;   // 10
-    recentMovements.slice().reverse().forEach((point, reverseIndex) => {  // reverse를 통해 reverseIndex=0이 가장 최신
-      const index = N - 1 - reverseIndex; // index=0이 가장 오래된 데이터
+    recentMovements.forEach((point, index) => { //0이 가장 최근
       const ratio = index / (N - 1);
 
-      const maxY = 480;                             // 카메라: 640*480
       const radius = 20 + 40 * ratio;               // 작게 → 크게
       const opacity = 1.0 - 0.5 * ratio;            // 투명도 100% → 50%
       const r = Math.round(255 * (1 - ratio));      // 빨강 → 0
@@ -84,7 +82,7 @@ useEffect(() => {
       const color = `rgba(${r}, ${g}, 0, ${opacity})`;
 
       const x = parseFloat(point.x);
-      const y = maxY - parseFloat(point.y);
+      const y = parseFloat(point.y);
       
       // 반투명 원
       ctx.beginPath();
