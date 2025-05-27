@@ -72,9 +72,8 @@ useEffect(() => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const N = recentMovements.length;   // 10
-    recentMovements.forEach((point, reverseIndex) => { 
-      const index = N - 1 - reverseIndex; // index=0이 가장 오래된 데이터
-      const ratio = index / (N - 1);
+    recentMovements.forEach((point, index) => { 
+      const ratio = (N - 1 - index) / (N - 1); // 🔁 최신 데이터일수록 작게
 
       const radius = 20 + 40 * ratio;               // 작게 → 크게
       const opacity = 1.0 - 0.5 * ratio;            // 투명도 100% → 50%
@@ -83,7 +82,7 @@ useEffect(() => {
       const color = `rgba(${r}, ${g}, 0, ${opacity})`;
 
       const x = parseFloat(point.x);
-      const y = maxY - parseFloat(point.y);
+      const y = parseFloat(point.y);
       
       // 반투명 원
       ctx.beginPath();
