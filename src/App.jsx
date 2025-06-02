@@ -16,7 +16,7 @@ export default function App() {
   const canvasRef = useRef(null);
 
   const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
-  const streamURL = "https://192.168.0.86:5005/video_feed";
+  const streamURL = "https://192.168.137.189:5005/video_feed";
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ''));
