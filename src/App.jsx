@@ -13,15 +13,11 @@ export default function App() {
     prevWater: "0"
   });
   const [recentMovements, setRecentMovements] = useState([]);
-  const [delayedMovements, setDelayedMovements] = useState([]);
-  const [gptAdvice, setGptAdvice] = useState("데이터를 분석하고 있습니다..."); // 딜레이된 움직임 데이터
+  const [gptAdvice, setGptAdvice] = useState("데이터를 분석하고 있습니다...");
   const canvasRef = useRef(null);
 
   const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
-  const streamURL = "http://192.168.0.86:5005/video_feed";
-  
-  // 딜레이 설정 (밀리초 단위, 예: 3000 = 3초)
-  const MOVEMENT_DELAY = 3000;
+  const streamURL = "https://192.168.137.189:5005/video_feed";
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ""));
@@ -31,7 +27,7 @@ export default function App() {
   // GPT 조언 가져오기 함수
   const fetchGptAdvice = async () => {
     try {
-      const response = await axios.get(`${backendURL}get_gpt_review`);
+      const response = await axios.get(`${backendURL}get_gpt_advice`);
       setGptAdvice(response.data.advice);
     } catch (error) {
       console.error("GPT 조언 가져오기 실패:", error);
@@ -39,99 +35,87 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [tracking, recent, diet, water, sleep] = await Promise.all([
-          axios.get(`${backendURL}get_tracking_info`),
-          axios.get(`${backendURL}recent_movements`),
-          axios.get(`${backendURL}get_diet_info`),
-          axios.get(`${backendURL}get_water_info`),
-          axios.get(`${backendURL}get_sleep_info`),
-        ]);
+  const fetchData = async (isfirst) => {
+    try {
+      const [tracking, recent, diet, water, sleep] = await Promise.all([
+        axios.get(`${backendURL}get_tracking_info`),
+        axios.get(`${backendURL}recent_movements` + "?isfirst=" + isfirst),
+        axios.get(`${backendURL}get_diet_info`),
+        axios.get(`${backendURL}get_water_info`),
+        axios.get(`${backendURL}get_sleep_info`),
+      ]);
+      
+      setMovementData({
+        totalDistance: tracking.data.total_movement_today,
+        prevDistance: tracking.data.avg_movement_past_7days,
+        totalDiet: diet.data.total_diet,
+        prevDiet: diet.data.prev_avg_diet,
+        totalWater: water.data.total_water,
+        prevWater: water.data.prev_avg_water,
+        totalSleep: sleep.data.total_sleep,
+        prevSleep: sleep.data.prev_avg_sleep,
+      });
 
-        setMovementData({
-          totalDistance: tracking.data.total_movement_today.toFixed(2) + "m",
-          prevDistance: tracking.data.avg_movement_past_7days.toFixed(2) + "m",
-          totalDiet: diet.data.total_diet.toFixed(0),
-          prevDiet: diet.data.prev_avg_diet.toFixed(0),
-          totalWater: water.data.total_water.toFixed(0),
-          prevWater: water.data.prev_avg_water.toFixed(0),
-          totalSleep: (sleep.data.total_sleep / 3600).toFixed(1),
-          prevSleep: (sleep.data.prev_avg_sleep / 3600).toFixed(1),
+      if (isfirst == 1) {
+        // 처음에는 전체 배열을 설정
+        setRecentMovements(recent.data.recent_movements);
+      } else {
+        // 함수형 업데이트를 사용해서 현재 상태를 정확히 참조
+        setRecentMovements(prevMovements => {
+          const newMovement = recent.data.recent_movements[0];
+          prevMovements.unshift(newMovement)
+          prevMovements.pop()
+          // 새로운 움직임을 배열 끝에 추가하고, 배열이 너무 길어지면 앞에서 제거
+          const updatedMovements = [...prevMovements];
+          // 예를 들어 최대 10개까지만 유지하고 싶다면:
+          // return updatedMovements.length > 10 ? updatedMovements.slice(1) : updatedMovements;
+          return updatedMovements;
         });
-
-        const sorted = recent.data.recent_movements
-          .map((item) => ({
-            ...item,
-            createdAt: new Date(item.timestamp),
-          }))
-          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-        setRecentMovements(sorted);
-      } catch (error) {
-        console.error("API 호출 실패:", error);
       }
-    };
+    } catch (error) {
+      console.error("API 호출 실패:", error);
+    }
+  };
 
-    fetchData();
-    fetchGptAdvice(); // GPT 조언도 함께 가져오기
+  useEffect(() => {
+    fetchData(1);
+    fetchGptAdvice();
     
     const interval = setInterval(() => {
-      fetchData();
-      fetchGptAdvice(); // 10초마다 GPT 조언도 업데이트
-    }, 10000);
+      fetchData(0);
+    }, 4000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, []); // 빈 의존성 배열
 
-  // 움직임 데이터에 딜레이 적용
   useEffect(() => {
-    if (recentMovements.length === 0) {
-      setDelayedMovements([]);
-      return;
-    }
+    const canvas = canvasRef.current;
+    if (!canvas || recentMovements.length === 0) return;
 
-    // 딜레이 후에 움직임 데이터를 업데이트
-    const delayTimer = setTimeout(() => {
-      setDelayedMovements(recentMovements);
-    }, MOVEMENT_DELAY);
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    return () => clearTimeout(delayTimer);
+    const N = recentMovements.length;
+    recentMovements.forEach((point, index) => {
+      const ratio = index / (N - 1);
+
+      const radius = 20 + 40 * ratio;
+      const opacity = 1.0 - 0.5 * ratio;
+      const r = Math.round(255 * (1 - ratio));
+      const g = Math.round(255 * ratio);
+      const color = `rgba(${r}, ${g}, 0, ${opacity})`;
+
+      ctx.beginPath();
+      ctx.arc(parseFloat(point.x), parseFloat(point.y), radius, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(parseFloat(point.x), parseFloat(point.y), 2, 0, 2 * Math.PI);
+      ctx.fillStyle = "#ff4500";
+      ctx.fill();
+    });
   }, [recentMovements]);
-
-  useEffect(() => {
-    const drawFixedRatioCircles = () => {
-      const canvas = canvasRef.current;
-      if (!canvas || delayedMovements.length === 0) return; // delayedMovements 사용
-
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const N = delayedMovements.length;
-      delayedMovements.forEach((point, index) => { // delayedMovements 사용
-        const ratio = index / (N - 1);
-
-        const radius = 20 + 40 * ratio;
-        const opacity = 1.0 - 0.5 * ratio;
-        const r = Math.round(255 * (1 - ratio));
-        const g = Math.round(255 * ratio);
-        const color = `rgba(${r}, ${g}, 0, ${opacity})`;
-
-        ctx.beginPath();
-        ctx.arc(parseFloat(point.x), parseFloat(point.y), radius, 0, 2 * Math.PI);
-        ctx.fillStyle = color;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(parseFloat(point.x), parseFloat(point.y), 2, 0, 2 * Math.PI);
-        ctx.fillStyle = "#ff4500";
-        ctx.fill();
-      });
-    };
-
-    drawFixedRatioCircles();
-  }, [delayedMovements]); // delayedMovements를 의존성으로 변경
 
   const InfoCard = ({ label, current, standard, emoji }) => {
     const percentage = Math.min(
@@ -260,15 +244,6 @@ export default function App() {
                 pointerEvents: "none",
               }}
             />
-          </div>
-          {/* 딜레이 상태 표시 (선택사항) */}
-          <div style={{ 
-            marginTop: "10px", 
-            fontSize: "12px", 
-            color: "#666",
-            textAlign: "center"
-          }}>
-            Movement visualization delay: {MOVEMENT_DELAY/1000}초
           </div>
         </div>
 
