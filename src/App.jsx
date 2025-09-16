@@ -80,7 +80,7 @@ export default function App() {
     const interval = setInterval(() => {
       fetchData();
       // fetchGptAdvice(); // 이 줄을 제거하여 GPT 조언 자동 새로고침 비활성화
-    }, 10000);
+    }, 1000);
     
     return () => clearInterval(interval);
   }, []);
