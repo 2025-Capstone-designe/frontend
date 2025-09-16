@@ -17,7 +17,7 @@ export default function App() {
   const canvasRef = useRef(null);
 
   const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
-  const streamURL = "http://192.168.137.189:5005/video_feed";
+  const streamURL = "https://192.168.137.189:5005/video_feed";
   
   // 딜레이 설정 (밀리초 단위, 예: 3000 = 3초)
   const MOVEMENT_DELAY = 3000;
