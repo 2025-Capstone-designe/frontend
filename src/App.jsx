@@ -21,7 +21,7 @@ export default function App() {
   const streamURL = "https://192.168.137.189:5005/video_feed";
   
   // 딜레이 설정 (밀리초 단위, 예: 3000 = 3초)
-  const MOVEMENT_DELAY = ㄹ0000;
+  const MOVEMENT_DELAY = 0000;
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ""));
