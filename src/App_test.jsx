@@ -13,19 +13,84 @@ export default function App() {
     prevWater: "0"
   });
   const [recentMovements, setRecentMovements] = useState([]);
-  const [delayedMovements, setDelayedMovements] = useState([]); // 딜레이된 움직임 데이터
+  const [videoFrames, setVideoFrames] = useState([]); // 영상 프레임 버퍼
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const canvasRef = useRef(null);
-
-  const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
-  const streamURL = "http://192.168.0.86:5005/video_feed";
+  const videoCanvasRef = useRef(null); // 영상을 그릴 캔버스
+  const hiddenVideoRef = useRef(null); // 숨겨진 비디오 엘리먼트
   
-  // 딜레이 설정 (밀리초 단위, 예: 3000 = 3초)
-  const MOVEMENT_DELAY = 3000;
+  const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
+  const streamURL = "http://192.168.137.189:5005/video_feed";
+  
+  // 딜레이 설정 (밀리초 단위)
+  const VIDEO_DELAY = 3000; // 영상 딜레이
+  const FRAME_RATE = 30; // FPS
+  const MAX_FRAMES = Math.floor((VIDEO_DELAY / 1000) * FRAME_RATE); // 버퍼에 저장할 최대 프레임 수
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ""));
     return isNaN(num) ? 0 : num;
   };
+
+  // 영상 프레임 캡처 및 버퍼링
+  useEffect(() => {
+    const captureFrames = () => {
+      const video = hiddenVideoRef.current;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!video || video.readyState < 2) return;
+      
+      canvas.width = 640;
+      canvas.height = 480;
+      ctx.drawImage(video, 0, 0, 640, 480);
+      
+      const frameData = canvas.toDataURL('image/jpeg', 0.8);
+      const timestamp = Date.now();
+      
+      setVideoFrames(prev => {
+        const newFrames = [...prev, { data: frameData, timestamp }];
+        // 최대 프레임 수를 초과하면 오래된 프레임 제거
+        return newFrames.length > MAX_FRAMES ? newFrames.slice(-MAX_FRAMES) : newFrames;
+      });
+    };
+
+    const interval = setInterval(captureFrames, 1000 / FRAME_RATE);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 딜레이된 프레임 표시
+  useEffect(() => {
+    if (videoFrames.length === 0) return;
+    
+    const displayDelayedFrame = () => {
+      const now = Date.now();
+      // VIDEO_DELAY만큼 이전의 프레임을 찾아서 표시
+      const targetTime = now - VIDEO_DELAY;
+      
+      let targetFrame = videoFrames[0];
+      for (let i = videoFrames.length - 1; i >= 0; i--) {
+        if (videoFrames[i].timestamp <= targetTime) {
+          targetFrame = videoFrames[i];
+          break;
+        }
+      }
+      
+      const canvas = videoCanvasRef.current;
+      if (canvas && targetFrame) {
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, 640, 480);
+        };
+        img.src = targetFrame.data;
+      }
+    };
+
+    const interval = setInterval(displayDelayedFrame, 1000 / FRAME_RATE);
+    return () => clearInterval(interval);
+  }, [videoFrames]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,31 +132,16 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // 움직임 데이터에 딜레이 적용
-  useEffect(() => {
-    if (recentMovements.length === 0) {
-      setDelayedMovements([]);
-      return;
-    }
-
-    // 딜레이 후에 움직임 데이터를 업데이트
-    const delayTimer = setTimeout(() => {
-      setDelayedMovements(recentMovements);
-    }, MOVEMENT_DELAY);
-
-    return () => clearTimeout(delayTimer);
-  }, [recentMovements]);
-
   useEffect(() => {
     const drawFixedRatioCircles = () => {
       const canvas = canvasRef.current;
-      if (!canvas || delayedMovements.length === 0) return; // delayedMovements 사용
+      if (!canvas || recentMovements.length === 0) return;
 
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const N = delayedMovements.length;
-      delayedMovements.forEach((point, index) => { // delayedMovements 사용
+      const N = recentMovements.length;
+      recentMovements.forEach((point, index) => {
         const ratio = index / (N - 1);
 
         const radius = 20 + 40 * ratio;
@@ -113,7 +163,7 @@ export default function App() {
     };
 
     drawFixedRatioCircles();
-  }, [delayedMovements]); // delayedMovements를 의존성으로 변경
+  }, [recentMovements]);
 
   const InfoCard = ({ label, current, standard, emoji }) => {
     const percentage = Math.min(
@@ -238,7 +288,34 @@ export default function App() {
               border: "2px solid black",
             }}
           >
-            <img src={streamURL} alt="Live Stream" width={640} height={480} />
+            {/* 숨겨진 실시간 비디오 (프레임 캡처용) */}
+            <img 
+              ref={hiddenVideoRef}
+              src={streamURL} 
+              alt="Hidden Live Stream" 
+              width={640} 
+              height={480}
+              style={{ 
+                position: "absolute",
+                left: "-9999px",
+                top: "-9999px"
+              }}
+              crossOrigin="anonymous"
+            />
+            
+            {/* 딜레이된 비디오를 표시할 캔버스 */}
+            <canvas
+              ref={videoCanvasRef}
+              width={640}
+              height={480}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+              }}
+            />
+            
+            {/* 움직임 트래킹 오버레이 */}
             <canvas
               ref={canvasRef}
               width={640}
@@ -251,6 +328,7 @@ export default function App() {
               }}
             />
           </div>
+          
           {/* 딜레이 상태 표시 */}
           <div style={{ 
             marginTop: "10px", 
@@ -258,7 +336,7 @@ export default function App() {
             color: "#666",
             textAlign: "center"
           }}>
-            Movement visualization delay: {MOVEMENT_DELAY/1000}초
+            Video delay: {VIDEO_DELAY/1000}초 | Buffered frames: {videoFrames.length}
           </div>
         </div>
 
