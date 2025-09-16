@@ -13,18 +13,30 @@ export default function App() {
     prevWater: "0"
   });
   const [recentMovements, setRecentMovements] = useState([]);
-  const [delayedMovements, setDelayedMovements] = useState([]); // 딜레이된 움직임 데이터
+  const [delayedMovements, setDelayedMovements] = useState([]);
+  const [gptAdvice, setGptAdvice] = useState("데이터를 분석하고 있습니다..."); // 딜레이된 움직임 데이터
   const canvasRef = useRef(null);
 
   const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
   const streamURL = "https://192.168.137.189:5005/video_feed";
   
   // 딜레이 설정 (밀리초 단위, 예: 3000 = 3초)
-  const MOVEMENT_DELAY = 3000;
+  const MOVEMENT_DELAY = 10000;
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ""));
     return isNaN(num) ? 0 : num;
+  };
+
+  // GPT 조언 가져오기 함수
+  const fetchGptAdvice = async () => {
+    try {
+      const response = await axios.get(`${backendURL}get_gpt_review`);
+      setGptAdvice(response.data.advice);
+    } catch (error) {
+      console.error("GPT 조언 가져오기 실패:", error);
+      setGptAdvice("조언을 가져오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   useEffect(() => {
@@ -63,7 +75,13 @@ export default function App() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    fetchGptAdvice(); // GPT 조언도 함께 가져오기
+    
+    const interval = setInterval(() => {
+      fetchData();
+      fetchGptAdvice(); // 10초마다 GPT 조언도 업데이트
+    }, 10000);
+    
     return () => clearInterval(interval);
   }, []);
 
@@ -169,14 +187,6 @@ export default function App() {
   const currentDistance = extractDistance(movementData.totalDistance);
   const standardDistance = extractDistance(movementData.prevDistance);
 
-  const recommendationText =
-    `오늘 하루는 standard(${standardDistance.toFixed(
-      2
-    )}m)와 비교해 tracking(${currentDistance.toFixed(2)}m) 양이 ` +
-    (currentDistance < standardDistance
-      ? "적으므로 운동을 추천합니다."
-      : "많으므로 휴식을 추천합니다.");
-
   return (
     <div style={{ width: "100%" }}>
       {/* 상단 배너 */}
@@ -251,7 +261,7 @@ export default function App() {
               }}
             />
           </div>
-          {/* 딜레이 상태 표시 */}
+          {/* 딜레이 상태 표시 (선택사항) */}
           <div style={{ 
             marginTop: "10px", 
             fontSize: "12px", 
@@ -297,7 +307,7 @@ export default function App() {
             emoji: "🛏️",
           })}
 
-          {/* 추천 문구 박스 */}
+          {/* GPT 조언 박스 */}
           <div
             style={{
               width: "600px",
@@ -307,13 +317,31 @@ export default function App() {
               borderRadius: "10px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
               padding: "14px 16px",
-              fontSize: "18px",
-              fontWeight: "bold",
+              fontSize: "16px",
+              fontWeight: "normal",
               color: "#333",
-              textAlign: "center",
+              textAlign: "left",
+              minHeight: "60px",
+              display: "flex",
+              alignItems: "center",
             }}
           >
-            {recommendationText}
+            <div style={{ width: "100%" }}>
+              <div style={{ 
+                fontSize: "14px", 
+                color: "#666", 
+                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
+                <span>🤖</span>
+                <span style={{ fontWeight: "bold" }}>AI 햄스터 건강 조언</span>
+              </div>
+              <div style={{ lineHeight: "1.4" }}>
+                {gptAdvice}
+              </div>
+            </div>
           </div>
         </div>
       </div>
