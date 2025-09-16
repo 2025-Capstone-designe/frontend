@@ -75,11 +75,11 @@ export default function App() {
     };
 
     fetchData();
-    //fetchGptAdvice(); // GPT 조언도 함께 가져오기
+    fetchGptAdvice(); // 초기 로딩 시에만 GPT 조언 가져오기
     
     const interval = setInterval(() => {
       fetchData();
-      fetchGptAdvice(); // 10초마다 GPT 조언도 업데이트
+      // fetchGptAdvice(); // 이 줄을 제거하여 GPT 조언 자동 새로고침 비활성화
     }, 10000);
     
     return () => clearInterval(interval);
