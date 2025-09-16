@@ -75,7 +75,7 @@ export default function App() {
     };
 
     fetchData();
-    fetchGptAdvice(); // GPT 조언도 함께 가져오기
+    //fetchGptAdvice(); // GPT 조언도 함께 가져오기
     
     const interval = setInterval(() => {
       fetchData();
