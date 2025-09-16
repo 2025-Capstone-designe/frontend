@@ -21,7 +21,7 @@ export default function App() {
   const streamURL = "https://192.168.137.189:5005/video_feed";
   
   // 딜레이 설정 (밀리초 단위, 예: 3000 = 3초)
-  const MOVEMENT_DELAY = 10000;
+  const MOVEMENT_DELAY = ㄹ0000;
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ""));
@@ -80,7 +80,7 @@ export default function App() {
     const interval = setInterval(() => {
       fetchData();
       // fetchGptAdvice(); // 이 줄을 제거하여 GPT 조언 자동 새로고침 비활성화
-    }, 1000);
+    }, 10000);
     
     return () => clearInterval(interval);
   }, []);
