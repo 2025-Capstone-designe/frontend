@@ -31,7 +31,7 @@ export default function App() {
   // GPT 조언 가져오기 함수
   const fetchGptAdvice = async () => {
     try {
-      const response = await axios.get(`${backendURL}get_gpt_review`);
+      const response = await axios.get(`${backendURL}get_gpt_advice`);
       setGptAdvice(response.data.advice);
     } catch (error) {
       console.error("GPT 조언 가져오기 실패:", error);
