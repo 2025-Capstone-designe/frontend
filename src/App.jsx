@@ -16,13 +16,8 @@ export default function App() {
   const [gptAdvice, setGptAdvice] = useState("데이터를 분석하고 있습니다...");
   const canvasRef = useRef(null);
 
-<<<<<<< HEAD
   const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/"; // 백엔드 서버 주소
   const streamURL = "https://192.168.137.189:5005/video_feed"; // 라즈베리파이 실시간 영상 주소
-=======
-  const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/";
-  const streamURL = "https://192.168.137.189:5005/video_feed";
->>>>>>> 03f4aa8b42a8dcebf5182aeced1abdf3cd98d170
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ""));
@@ -61,29 +56,14 @@ export default function App() {
         prevSleep: sleep.data.prev_avg_sleep,
       });
 
-<<<<<<< HEAD
       if (isfirst == 1) { // 처음 마운트 시 10개의 좌표 데이터가 최신순으로 배열에 저장
         setRecentMovements(recent.data.recent_movements);
       } else { // 새로운 좌표를 받으면 배열의 앞에 데이터를 추가하고 가장 오래된 데이터를 제거
-=======
-      if (isfirst == 1) {
-        // 처음에는 전체 배열을 설정
-        setRecentMovements(recent.data.recent_movements);
-      } else {
-        // 함수형 업데이트를 사용해서 현재 상태를 정확히 참조
->>>>>>> 03f4aa8b42a8dcebf5182aeced1abdf3cd98d170
         setRecentMovements(prevMovements => {
           const newMovement = recent.data.recent_movements[0];
           prevMovements.unshift(newMovement)
           prevMovements.pop()
-<<<<<<< HEAD
           const updatedMovements = [...prevMovements];
-=======
-          // 새로운 움직임을 배열 끝에 추가하고, 배열이 너무 길어지면 앞에서 제거
-          const updatedMovements = [...prevMovements];
-          // 예를 들어 최대 10개까지만 유지하고 싶다면:
-          // return updatedMovements.length > 10 ? updatedMovements.slice(1) : updatedMovements;
->>>>>>> 03f4aa8b42a8dcebf5182aeced1abdf3cd98d170
           return updatedMovements;
         });
       }
@@ -92,31 +72,21 @@ export default function App() {
     }
   };
 
-<<<<<<< HEAD
   // 4초에 한 번 데이터를 받아오고 gpt 조언은 마운트 시 한 번만 받아옴
-=======
->>>>>>> 03f4aa8b42a8dcebf5182aeced1abdf3cd98d170
   useEffect(() => {
     fetchData(1);
     fetchGptAdvice();
     
     const interval = setInterval(() => {
-<<<<<<< HEAD
       fetchData(0); 
-=======
-      fetchData(0);
->>>>>>> 03f4aa8b42a8dcebf5182aeced1abdf3cd98d170
     }, 4000);
     
     return () => clearInterval(interval);
   }, []); // 빈 의존성 배열
 
-<<<<<<< HEAD
   // 영상 위 원 표시
-  // 최신 좌표일수록 작고 진한 빨갛게 표시
-  // 오래된 좌표일수록 크고 연한 녹색으로 표시
-=======
->>>>>>> 03f4aa8b42a8dcebf5182aeced1abdf3cd98d170
+  // 최신 좌표일수록 작고 진하고 빨갛게 표시
+  // 오래된 좌표일수록 크고 연하고 녹색으로 표시
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || recentMovements.length === 0) return;
@@ -146,11 +116,8 @@ export default function App() {
     });
   }, [recentMovements]);
 
-<<<<<<< HEAD
 
   // UI
-=======
->>>>>>> 03f4aa8b42a8dcebf5182aeced1abdf3cd98d170
   const InfoCard = ({ label, current, standard, emoji }) => {
     const percentage = Math.min(
       (extractDistance(current) / extractDistance(standard)) * 100,
