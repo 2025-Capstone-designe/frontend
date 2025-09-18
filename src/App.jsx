@@ -266,14 +266,14 @@ export default function App() {
           })}
           {InfoCard({
             label: "Eating",
-            current: movementData.totalDiet + "분",
-            standard: movementData.prevDiet + "분",
+            current: movementData.totalDiet + "g",
+            standard: movementData.prevDiet + "g",
             emoji: "🍽️",
           })}
           {InfoCard({
             label: "Drinking",
-            current: movementData.totalWater + "분",
-            standard: movementData.prevWater + "분",
+            current: movementData.totalWater + "ml",
+            standard: movementData.prevWater + "ml",
             emoji: "🥤",
           })}
           {InfoCard({
