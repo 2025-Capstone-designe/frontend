@@ -32,5 +32,5 @@ npm run dev
 ```
 
 ## 배포하는 방법
-Netlify를 활용하여 github를 연동해 배포 가능
+Netlify를 활용하여 github를 연동해 배포 가능 <br></br>
 H.A.M 팀의 프론트엔드 배포 주소: https://ham-elaborate-granita-15882a.netlify.app/
