@@ -17,7 +17,7 @@ export default function App() {
   const canvasRef = useRef(null);
 
   const backendURL = "https://macro-coil-459205-d6.du.r.appspot.com/"; // 백엔드 서버 주소
-  const streamURL = "https://192.168.137.189:5005/video_feed"; // 라즈베리파이 실시간 영상 주소
+  const streamURL = "https://192.168.137.149:5005/video_feed"; // 라즈베리파이 실시간 영상 주소
 
   const extractDistance = (distanceStr) => {
     const num = parseFloat(String(distanceStr).replace(/[^0-9.]/g, ""));
